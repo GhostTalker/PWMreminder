@@ -15,7 +15,7 @@ PWMreminder is a Python script that regularly reads events from a MySQL database
 
     ```bash
     python3 -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    source venv/bin/activate 
     ```
 
 3. **Install the dependencies:**
@@ -48,7 +48,6 @@ mysqlpass = dbpassword
 - mysqluser: MySQL username.
 - mysqlpass: MySQL password.
 
-## Database Structure
 ## Database Structure
 
 ### Table `discord`
@@ -85,7 +84,7 @@ The script is configured to run every 30 minutes between 16:00 and 22:00. The sc
 ## Sample Output
 Upon successful execution, the script will output information about found events and their reminder status:
 
-```
+```bash
 Create connection pool:
 Connection Pool Name -  mysql_connection_pool
 Connection Pool Size -  5
