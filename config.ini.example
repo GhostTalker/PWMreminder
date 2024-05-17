@@ -1,0 +1,6 @@
+[mysql]
+mysqlhost = localhost
+mysqlport = 3306
+mysqldb = statsdatabase
+mysqluser = dbuser
+mysqlpass = dbpassword
