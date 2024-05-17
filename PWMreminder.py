@@ -11,7 +11,7 @@ __status__ = "TEST"
 import sys
 from mysql.connector import pooling
 from mysql.connector import Error
-from config import config_parameters
+import configparser
 
 
 ## read config
@@ -23,6 +23,7 @@ _mysqlport = _config.get("mysql", "mysqlport", fallback='3306')
 _mysqldb = _config.get("mysql", "mysqldb")
 _mysqluser = _config.get("mysql", "mysqluser")
 _mysqlpass = _config.get("mysql", "mysqlpass")
+_remind_time_before_start = _config.get("general","remind_time_before_start")
 
 
 ## create connection pool and connect to MySQL

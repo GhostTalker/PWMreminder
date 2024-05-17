@@ -1,3 +1,6 @@
+[general]
+remind_time_before_start = 30
+
 [mysql]
 mysqlhost = localhost
 mysqlport = 3306
