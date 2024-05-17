@@ -10,10 +10,11 @@ __status__ = "TEST"
 
 import os
 import sys
-from mysql.connector import pooling
-from mysql.connector import Error
+import json
+from datetime import datetime, timedelta
+import requests
+from mysql.connector import pooling, Error
 import configparser
-
 
 ## read config
 _config = configparser.ConfigParser()
@@ -24,8 +25,7 @@ _mysqlport = _config.get("mysql", "mysqlport", fallback='3306')
 _mysqldb = _config.get("mysql", "mysqldb")
 _mysqluser = _config.get("mysql", "mysqluser")
 _mysqlpass = _config.get("mysql", "mysqlpass")
-_remind_time_before_start = _config.get("general","remind_time_before_start")
-
+_remind_time_before_start = int(_config.get("general", "remind_time_before_start"))
 
 ## create connection pool and connect to MySQL
 try:
@@ -49,10 +49,57 @@ try:
         db_Info = connection_object.get_server_info()
         print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_Info)
 
-        cursor = connection_object.cursor()
-        cursor.execute("select database();")
-        record = cursor.fetchone()
-        print("You're connected to - ", record)
+        cursor = connection_object.cursor(dictionary=True)
+
+        # Fetch Discord webhook information
+        cursor.execute("SELECT * FROM discord")
+        discord_webhooks = cursor.fetchall()
+        discord_webhooks_dict = {webhook["discord_guild_name"]: webhook for webhook in discord_webhooks}
+
+        # Calculate the reminder time threshold
+        current_time = datetime.now()
+        remind_time_threshold = current_time + timedelta(minutes=_remind_time_before_start)
+
+        # Query to fetch events happening within the reminder time threshold
+        cursor.execute("""
+            SELECT * FROM events
+            WHERE STR_TO_DATE(CONCAT(event_day, ' ', event_time), '%Y-%m-%d %H:%i:%s') BETWEEN %s AND %s
+        """, (current_time, remind_time_threshold))
+
+        events = cursor.fetchall()
+        events_dict = {event["event_id"]: event for event in events}
+
+        if events:
+            for event in events:
+                event_id = event["event_id"]
+                event_name = event["event_name"]
+                event_day = event["event_day"]
+                event_time = event["event_time"]
+                event_description = event["event_description"]
+
+                for guild_name, webhook_info in discord_webhooks_dict.items():
+                    webhook_id = webhook_info["discord_webhook_id"]
+                    role_id = webhook_info.get("discord_role_id")
+
+                    # Create the message
+                    message = {
+                        "content": f"@everyone Reminder for event: **{event_name}**\nDescription: {event_description}\nTime: {event_day} {event_time}",
+                    }
+
+                    if role_id:
+                        message["content"] = f"<@&{role_id}> " + message["content"]
+
+                    # Send the message to the Discord webhook
+                    webhook_url = f"https://discord.com/api/webhooks/{webhook_id}"
+                    response = requests.post(webhook_url, json=message)
+
+                    if response.status_code == 204:
+                        print(f"Successfully sent reminder for event '{event_name}' to guild '{guild_name}'")
+                    else:
+                        print(
+                            f"Failed to send reminder for event '{event_name}' to guild '{guild_name}': {response.text}")
+        else:
+            print("No upcoming events to remind.")
 
 except Error as e:
     print("Error while connecting to MySQL using Connection pool ", e)
@@ -63,4 +110,3 @@ finally:
         cursor.close()
         connection_object.close()
         print("MySQL connection is closed")
-
