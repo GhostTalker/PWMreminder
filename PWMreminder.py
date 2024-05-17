@@ -71,10 +71,23 @@ try:
         events = cursor.fetchall()
         events_dict = {event["event_id"]: event for event in events}
 
+
+        # Helper function to get the next occurrence of a weekday
+        def get_next_weekday(start_date, weekday):
+            days_ahead = weekday - start_date.weekday()
+            if days_ahead < 0:
+                days_ahead += 7
+            return start_date + timedelta(days=days_ahead)
+
+
         # Filter events based on the reminder time threshold
         upcoming_events = []
         for event in events:
-            event_datetime = datetime.strptime(f"{event['event_day']} {event['event_time']}", '%Y-%m-%d %H:%M:%S')
+            event_day = int(event['event_day']) - 1  # Adjust for Python's weekday (0 = Monday, ..., 6 = Sunday)
+            event_time = event['event_time']
+            next_event_date = get_next_weekday(current_time, event_day)
+            event_datetime_str = f"{next_event_date.strftime('%Y-%m-%d')} {event_time}:00"
+            event_datetime = datetime.strptime(event_datetime_str, '%Y-%m-%d %H:%M:%S')
             if current_time <= event_datetime <= remind_time_threshold:
                 upcoming_events.append(event)
 
