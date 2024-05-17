@@ -12,6 +12,7 @@ import os
 import sys
 import json
 from datetime import datetime, timedelta
+import pytz
 import requests
 from mysql.connector import pooling, Error
 import configparser
@@ -26,6 +27,7 @@ _mysqldb = _config.get("mysql", "mysqldb")
 _mysqluser = _config.get("mysql", "mysqluser")
 _mysqlpass = _config.get("mysql", "mysqlpass")
 _remind_time_before_start = int(_config.get("general", "remind_time_before_start"))
+_timezone = _config.get("general", "timezone", fallback='UTC')  # Add a timezone configuration
 
 
 # Helper function to get the next occurrence of a weekday
@@ -80,7 +82,7 @@ try:
         discord_webhooks_dict = {webhook["discord_guild_name"]: webhook for webhook in discord_webhooks}
 
         # Calculate the reminder time threshold
-        current_time = datetime.now()
+        current_time = datetime.now(pytz.timezone(_timezone))
         remind_time_threshold = current_time + timedelta(minutes=_remind_time_before_start)
 
         print("Current time:", current_time)
@@ -103,6 +105,7 @@ try:
             next_event_date = get_next_weekday(current_time, event_day)
             event_datetime_str = f"{next_event_date.strftime('%Y-%m-%d')} {event_time}:00"
             event_datetime = datetime.strptime(event_datetime_str, '%Y-%m-%d %H:%M:%S')
+            event_datetime = current_time.tzinfo.localize(event_datetime)
             if current_time <= event_datetime <= remind_time_threshold:
                 upcoming_events.append(event)
 
