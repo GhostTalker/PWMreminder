@@ -197,7 +197,14 @@ def schedule_tasks():
     schedule.every().day.at("22:00").do(send_reminders)
 
 
+def exit_gracefully(signum, frame):
+    print("Exiting gracefully...")
+    sys.exit(0)
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, exit_gracefully)
+    signal.signal(signal.SIGTERM, exit_gracefully)
+
     schedule_tasks()
     while True:
         schedule.run_pending()
