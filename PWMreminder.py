@@ -83,6 +83,7 @@ try:
         # Filter events based on the reminder time threshold
         upcoming_events = []
         for event in events:
+            # Assume event_day is the day of the week (1=Monday, ..., 7=Sunday)
             event_day = int(event['event_day']) - 1  # Adjust for Python's weekday (0 = Monday, ..., 6 = Sunday)
             event_time = event['event_time']
             next_event_date = get_next_weekday(current_time, event_day)
@@ -100,7 +101,7 @@ try:
                 event_description = event["event_description"]
 
                 for guild_name, webhook_info in discord_webhooks_dict.items():
-                    webhook_id = webhook_info["discord_webhook_id"]
+                    webhook_url = webhook_info["discord_webhook_id"]
                     role_id = webhook_info.get("discord_role_id")
 
                     # Create the message
@@ -112,7 +113,6 @@ try:
                         message["content"] = f"<@&{role_id}> " + message["content"]
 
                     # Send the message to the Discord webhook
-                    webhook_url = f"https://discord.com/api/webhooks/{webhook_id}"
                     response = requests.post(webhook_url, json=message)
 
                     if response.status_code == 204:
