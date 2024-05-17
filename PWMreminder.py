@@ -27,6 +27,29 @@ _mysqluser = _config.get("mysql", "mysqluser")
 _mysqlpass = _config.get("mysql", "mysqlpass")
 _remind_time_before_start = int(_config.get("general", "remind_time_before_start"))
 
+
+# Helper function to get the next occurrence of a weekday
+def get_next_weekday(start_date, weekday):
+    days_ahead = weekday - start_date.weekday()
+    if days_ahead < 0:
+        days_ahead += 7
+    return start_date + timedelta(days=days_ahead)
+
+
+# Helper function to convert event_day to the correct weekday name
+def get_weekday_name(event_day):
+    weekday_map = {
+        1: "Monday",
+        2: "Tuesday",
+        3: "Wednesday",
+        4: "Thursday",
+        5: "Friday",
+        6: "Saturday",
+        7: "Sunday"
+    }
+    return weekday_map.get(event_day, "Invalid day")
+
+
 ## create connection pool and connect to MySQL
 try:
     connection_pool = pooling.MySQLConnectionPool(pool_name="mysql_connection_pool",
@@ -71,15 +94,6 @@ try:
         events = cursor.fetchall()
         events_dict = {event["event_id"]: event for event in events}
 
-
-        # Helper function to get the next occurrence of a weekday
-        def get_next_weekday(start_date, weekday):
-            days_ahead = weekday - start_date.weekday()
-            if days_ahead < 0:
-                days_ahead += 7
-            return start_date + timedelta(days=days_ahead)
-
-
         # Filter events based on the reminder time threshold
         upcoming_events = []
         for event in events:
@@ -96,7 +110,7 @@ try:
             for event in upcoming_events:
                 event_id = event["event_id"]
                 event_name = event["event_name"]
-                event_day = event["event_day"]
+                event_day_num = int(event["event_day"])
                 event_time = event["event_time"]
                 event_description = event["event_description"]
 
@@ -112,12 +126,12 @@ try:
                         "fields": [
                             {
                                 "name": "Time",
-                                "value": f"{event_day} at {event_time}",
+                                "value": f"{event_time}",
                                 "inline": True
                             },
                             {
                                 "name": "Day",
-                                "value": datetime.strptime(str(event_day), "%w").strftime("%A"),
+                                "value": get_weekday_name(event_day_num),
                                 "inline": True
                             }
                         ],
