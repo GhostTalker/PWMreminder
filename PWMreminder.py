@@ -66,14 +66,20 @@ try:
         # Query to fetch events happening within the reminder time threshold
         cursor.execute("""
             SELECT * FROM events
-            WHERE STR_TO_DATE(CONCAT(event_day, ' ', event_time), '%Y-%m-%d %H:%i:%s') BETWEEN %s AND %s
-        """, (current_time.strftime('%Y-%m-%d %H:%M:%S'), remind_time_threshold.strftime('%Y-%m-%d %H:%M:%S')))
+        """)
 
         events = cursor.fetchall()
         events_dict = {event["event_id"]: event for event in events}
 
-        if events:
-            for event in events:
+        # Filter events based on the reminder time threshold
+        upcoming_events = []
+        for event in events:
+            event_datetime = datetime.strptime(f"{event['event_day']} {event['event_time']}", '%Y-%m-%d %H:%M:%S')
+            if current_time <= event_datetime <= remind_time_threshold:
+                upcoming_events.append(event)
+
+        if upcoming_events:
+            for event in upcoming_events:
                 event_id = event["event_id"]
                 event_name = event["event_name"]
                 event_day = event["event_day"]
