@@ -60,11 +60,14 @@ try:
         current_time = datetime.now()
         remind_time_threshold = current_time + timedelta(minutes=_remind_time_before_start)
 
+        print("Current time:", current_time)
+        print("Reminder time threshold:", remind_time_threshold)
+
         # Query to fetch events happening within the reminder time threshold
         cursor.execute("""
             SELECT * FROM events
             WHERE STR_TO_DATE(CONCAT(event_day, ' ', event_time), '%Y-%m-%d %H:%i:%s') BETWEEN %s AND %s
-        """, (current_time, remind_time_threshold))
+        """, (current_time.strftime('%Y-%m-%d %H:%M:%S'), remind_time_threshold.strftime('%Y-%m-%d %H:%M:%S')))
 
         events = cursor.fetchall()
         events_dict = {event["event_id"]: event for event in events}
