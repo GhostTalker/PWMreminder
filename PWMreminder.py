@@ -104,9 +104,32 @@ try:
                     webhook_url = webhook_info["discord_webhook_id"]
                     role_id = webhook_info.get("discord_role_id")
 
-                    # Create the message
+                    # Create the embed message
+                    embed = {
+                        "title": f"Reminder for Event: {event_name}",
+                        "description": event_description,
+                        "color": 5814783,  # Blue color
+                        "fields": [
+                            {
+                                "name": "Time",
+                                "value": f"{event_day} at {event_time}",
+                                "inline": True
+                            },
+                            {
+                                "name": "Day",
+                                "value": datetime.strptime(str(event_day), "%w").strftime("%A"),
+                                "inline": True
+                            }
+                        ],
+                        "footer": {
+                            "text": "Don't miss it!"
+                        },
+                        "timestamp": event_datetime.isoformat()
+                    }
+
                     message = {
-                        "content": f"@everyone Reminder for event: **{event_name}**\nDescription: {event_description}\nTime: {event_day} {event_time}",
+                        "content": f"@everyone",
+                        "embeds": [embed]
                     }
 
                     if role_id:
