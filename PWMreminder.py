@@ -8,6 +8,7 @@ __copyright__ = "Copyright 2023, The GhostTalker project"
 __version__ = "0.0.1"
 __status__ = "TEST"
 
+import os
 import sys
 from mysql.connector import pooling
 from mysql.connector import Error
