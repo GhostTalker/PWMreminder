@@ -18,6 +18,7 @@ from mysql.connector import pooling, Error
 import configparser
 import schedule
 import time
+import signal
 
 ## read config
 _config = configparser.ConfigParser()
