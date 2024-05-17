@@ -128,13 +128,13 @@ try:
                         "color": 5814783,  # Blue color
                         "fields": [
                             {
-                                "name": "Time",
-                                "value": f"{event_time}",
+                                "name": "Day",
+                                "value": get_weekday_name(event_day_num),
                                 "inline": True
                             },
                             {
-                                "name": "Day",
-                                "value": get_weekday_name(event_day_num),
+                                "name": "Time",
+                                "value": f"{event_time}",
                                 "inline": True
                             }
                         ],
@@ -146,6 +146,7 @@ try:
 
                     message = {
                         "content": f"@everyone",
+                        "avatar_url": "https://github.com/GhostTalker/PWMreminder/blob/main/Elysium_Guilde_Logo.jpg",
                         "embeds": [embed]
                     }
 
