@@ -5,7 +5,7 @@
 #
 __author__ = "GhostTalker"
 __copyright__ = "Copyright 2023, The GhostTalker project"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __status__ = "TEST"
 
 import os
@@ -32,6 +32,9 @@ _mysqlpass = _config.get("mysql", "mysqlpass")
 _remind_time_before_start = int(_config.get("general", "remind_time_before_start"))
 _timezone = _config.get("general", "timezone", fallback='UTC')
 
+# Dictionary to store sent message IDs and their respective event times
+sent_messages = {}
+
 
 # Helper function to get the next occurrence of a weekday
 def get_next_weekday(start_date, weekday):
@@ -55,7 +58,7 @@ def get_weekday_name(event_day):
     return weekday_map.get(event_day, "Invalid day")
 
 
-# Function to perform the reminder task
+# Function to send reminders and store message IDs
 def send_reminders():
     try:
         connection_pool = pooling.MySQLConnectionPool(pool_name="mysql_connection_pool",
@@ -89,9 +92,6 @@ def send_reminders():
             tz = pytz.timezone(_timezone)
             current_time = datetime.now(tz)
             remind_time_threshold = current_time + timedelta(minutes=_remind_time_before_start)
-
-            #print("Current time:", current_time)
-            #print("Reminder time threshold:", remind_time_threshold)
 
             # Query to fetch events happening within the reminder time threshold
             cursor.execute("""
@@ -165,6 +165,7 @@ def send_reminders():
 
                         if response.status_code == 204:
                             print(f"Successfully sent reminder for event '{event_name}' to guild '{guild_name}'")
+                            sent_messages[response.headers['x-message-id']] = event_datetime
                         else:
                             print(
                                 f"Failed to send reminder for event '{event_name}' to guild '{guild_name}': {response.text}")
@@ -182,7 +183,28 @@ def send_reminders():
             print("MySQL connection is closed")
 
 
-# Schedule the task to run every 30 minutes between 16:00 and 22:00
+# Function to delete past event reminders
+def delete_past_reminders():
+    tz = pytz.timezone(_timezone)
+    current_time = datetime.now(tz)
+
+    for message_id, event_time in list(sent_messages.items()):
+        if current_time > event_time:
+            for guild_name, webhook_info in discord_webhooks_dict.items():
+                webhook_url = webhook_info["discord_webhook_id"]
+
+                # Delete the message from the Discord webhook
+                delete_url = f"{webhook_url}/messages/{message_id}"
+                response = requests.delete(delete_url)
+
+                if response.status_code == 204:
+                    print(f"Successfully deleted reminder for message ID '{message_id}'")
+                    del sent_messages[message_id]
+                else:
+                    print(f"Failed to delete reminder for message ID '{message_id}': {response.text}")
+
+
+# Schedule the tasks to run every 30 minutes between 16:00 and 22:00
 def schedule_tasks():
     schedule.every().day.at("16:00").do(send_reminders)
     schedule.every().day.at("16:30").do(send_reminders)
@@ -197,6 +219,7 @@ def schedule_tasks():
     schedule.every().day.at("21:00").do(send_reminders)
     schedule.every().day.at("21:30").do(send_reminders)
     schedule.every().day.at("22:00").do(send_reminders)
+    schedule.every(10).minutes.do(delete_past_reminders)
 
 
 def exit_gracefully(signum, frame):
@@ -206,8 +229,7 @@ def exit_gracefully(signum, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, exit_gracefully)
     signal.signal(signal.SIGTERM, exit_gracefully)
-    # execute for testing
-    send_reminders()
+
     schedule_tasks()
     while True:
         schedule.run_pending()
