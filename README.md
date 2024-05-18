@@ -100,5 +100,5 @@ Successfully sent reminder for event 'Test Event' to guild 'PWM Elysium'
 The script can be gracefully stopped by pressing Ctrl+C or sending a SIGTERM signal.
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under GNU GENERAL PUBLIC LICENSE. See the LICENSE file for details.
 
