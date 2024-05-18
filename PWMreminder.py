@@ -153,6 +153,7 @@ def send_reminders():
 
                         message = {
                             "content": f"@everyone",
+                            "avatar_url": "https://github.com/GhostTalker/PWMreminder/blob/main/Elysium_Guilde_Logo.jpg?raw=true",
                             "embeds": [embed]
                         }
 
